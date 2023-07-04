@@ -1464,8 +1464,797 @@ for(n in 23:100){
 }
 counter
 
-# Problem 54 - Poker hands
+# Problem 54 - Poker hand - SOLVED
+
+# Reading in the games to test
+
+handsConnect <- file(description = "p054_poker.txt", open = "r", blocking = TRUE)
+hands <- readLines(handsConnect)
+
+# Possible card values
+
+values <- c(2, 3, 4, 5, 6, 7, 8, 9, "T", "J", "Q", "K", "A")
+values <- values[length(values):1]
+
+# Test if a hand contains consecutive values
+
+consecTest <- function(x){
+  vals <- c()
+  bool <- FALSE
+  consecTestVec <- which(values %in% x)
+  for(i in 2:5){
+    vals[i-1] <- consecTestVec[i] - consecTestVec[i-1]
+  }
+  if(!(FALSE %in% (vals %in% 1))) bool <- TRUE
+  bool
+}
+
+# Find the values of all cards (for tiebreaker purposes)
+
+handValues <- function(x){
+  for(i in 1:length(x)){
+    x[i] <- which(values == x[i])
+  }
+  x <- as.numeric(x)
+  x <- sort(table(x), decreasing = TRUE)
+  newSort <- c()
+  for(i in 1:length(x)){
+    newSort <- c(newSort, rep(names(x)[i], x[i])) 
+  }
+  as.numeric(newSort)
+}
+
+p1wins <- 0
+p2wins <- 0
+
+for(j in 1:1000){
+  hand <- hands[j]
+  hand <- unlist(strsplit(hand, split = " "))
+  
+  # Creating data frames of each player's hands
+  
+  p1 <- hand[1:5]
+  p1 <- unlist(strsplit(p1, split = ""))
+  valuesp1 <- p1[seq(1,10,2)]
+  suitsp1 <- p1[seq(2,10,2)]
+  p1 <- as.data.frame(cbind(valuesp1,suitsp1))
+  p2 <- hand[6:10]
+  p2 <- unlist(strsplit(p2, split = ""))
+  valuesp2 <- p2[seq(1,10,2)]
+  suitsp2 <- p2[seq(2,10,2)]
+  p2 <- as.data.frame(cbind(valuesp2,suitsp2))
+  
+  # Finding Player 1's hand's rank
+  
+  result1 <- character(0)
+  handValue1 <- 0
+  
+  p1counts <- sort(table(p1$valuesp1), decreasing = TRUE)
+  if(!(FALSE %in% (values[1:5] %in% p1$valuesp1)) && length(unique(p1$suitsp1)) == 1) {
+    result1 <- 1 # "Royal Flush"
+  } else if(length(unique(p1$suitsp1)) == 1 && consecTest(p1$valuesp1)) {
+    result1 <- 2 # "Straight Flush"
+  } else if(4 %in% p1counts) {
+    result1 <- 3 # "Four of a Kind"
+  } else if(!(FALSE %in% (p1counts == c(3,2)))) {
+    result1 <- 4 # "Full House"
+  } else if(length(unique(p1$suitsp1)) == 1) {
+    result1 <- 5 # "Flush"
+  } else if(consecTest(p1$valuesp1)) {
+    result1 <- 6 # "Straight"
+  } else if(3 %in% p1counts) {
+    result1 <- 7 # "Three of a Kind"
+  } else if(length(names(p1counts[p1counts == 2])) == 2) {
+    result1 <- 8 # "Two Pairs"
+  } else if(!(FALSE %in% (p1counts == c(2,1,1,1)))) {
+    result1 <- 9 # "One Pair"
+  } else {
+    result1 <- 10 # "High Card"
+  }
+  
+  # Finding Player 2's hand's rank
+  
+  result2 <- character(0)
+  handValue2 <- 0
+  
+  p2counts <- sort(table(p2$valuesp2), decreasing = TRUE)
+  if(!(FALSE %in% (values[1:5] %in% p2$valuesp2)) && length(unique(p2$suitsp2)) == 1) {
+    result2 <- 1 # "Royal Flush"
+  } else if(length(unique(p2$suitsp2)) == 1 && consecTest(p2$valuesp2)) {
+    result2 <- 2 # "Straight Flush"
+  } else if(4 %in% p2counts) {
+    result2 <- 3 # "Four of a Kind"
+  } else if(!(FALSE %in% (p2counts == c(3,2)))) {
+    result2 <- 4 # "Full House"
+  } else if(length(unique(p2$suitsp2)) == 1) {
+    result2 <- 5 # "Flush"
+  } else if(consecTest(p2$valuesp2)) {
+    result2 <- 6 # "Straight"
+  } else if(3 %in% p2counts) {
+    result2 <- 7 # "Three of a Kind"
+  } else if(length(names(p2counts[p2counts == 2])) == 2) {
+    result2 <- 8 # "Two Pairs"
+  } else if(!(FALSE %in% (p2counts == c(2,1,1,1)))) {
+    result2 <- 9 # "One Pair"
+  } else {
+    result2 <- 10 # "High Card"
+  }
+  
+  if(result1 < result2){
+    p1wins <- p1wins + 1
+  } else if(result1 > result2){
+    p2wins <- p2wins + 1
+  } else {
+    handValue1 <- handValues(p1$valuesp1); handValue2 <- handValues(p2$valuesp2)
+  }
+  
+  if(result1 == result2){
+    for(i in 1:length(handValue1)){
+      if(handValue1[i] == handValue2[i]) next
+      if(handValue1[i] < handValue2[i]){
+        p1wins <- p1wins + 1; break
+      } else {
+        p2wins <- p2wins + 1; break
+      }
+    }
+  }
+}
+p1wins
+
+# Problem 55 - Lychrel numbers - SOLVED
+
+options(scipen = 999)
+
+testIfPalin <- function(x){
+  bool <- FALSE
+  test <- unlist(strsplit(as.character(x), split = ""))
+  test <- as.numeric(paste(test[length(test):1], collapse = ""))
+  if(x == test) bool <- TRUE
+  bool
+}
+
+nums <- as.numeric(1:10000)
+
+nonLychrel <- 0
+
+for(i in nums){
+  test <- i
+  for(j in 1:50){
+    palin <- unlist(strsplit(as.character(test), split = ""))
+    palin <- as.numeric(paste(palin[length(palin):1], collapse = ""))
+    if(testIfPalin(test+palin)) {nonLychrel <- nonLychrel + 1; break}
+    test <- test+palin
+  }
+}
+
+10000 - nonLychrel
+
+# Problem 56 - Powerful digit sum - SOLVED
+
+install.packages("gmp")
+library(gmp)
+
+allSums <- c(0)
+for(a in 99:1){
+  test <- a
+  if(9*log10(as.bigz(a)^99) < head(sort(allSums, decreasing = TRUE), 1)) break
+  for(b in a:1){
+    allSums <- c(allSums, sum(as.numeric(unlist(strsplit(as.character(as.bigz(a)^b), split = "")))))
+    if(9*log10(as.bigz(a)^b) < head(sort(allSums, decreasing = TRUE), 1)) break
+  }
+}
+head(sort(allSums, decreasing = TRUE), 1)
+
+# Problem 57 - Square root convergents - SOLVED
+
+additions <- as.bigz(c(4,10))
+for(i in 1:998){
+  additions <- c(additions, additions[i] + 2*additions[i+1])
+}
+numerators <- as.bigz(c(3))
+for(i in 1:999){
+  numerators <- c(numerators, numerators[i] + additions[i])
+}
+denominators <- as.bigz(c(2))
+for(i in 1:999){
+  denominators <- c(denominators, denominators[i] + numerators[i])
+}
+
+counter <- 0
+for(i in 1:1000){
+  if(ceiling(log10(numerators[i])) > ceiling(log10(denominators[i]))) counter <- counter + 1
+}
+counter
+
+# Problem 58 - Spiral primes - SOLVED
+
+primesUnder <- function(x){
+  nums <- 2:x
+  for(i in 1:length(nums)){
+    if(i > sqrt(x)) break
+    nums <- nums[nums == nums[i] | !((nums %% nums[i]) == 0)]
+  }
+  nums
+}
+topR <- c(1)
+for(i in 1:20000){
+  topR <- c(topR, 2 + topR[i] + 8*(i-1))
+}
+topL <- c(1)
+for(i in 1:20000){
+  topL <- c(topL, 4 + topL[i] + 8*(i-1))
+}
+bottomL <- c(1)
+for(i in 1:20000){
+  bottomL <- c(bottomL, 6 + bottomL[i] + 8*(i-1))
+}
+
+primes <- primesUnder(sqrt(max(bottomL)))
+
+primeOrNot <- c(0)
+for(i in 2:20000){
+  primeOrNot <- c(primeOrNot, !(0 %in% (topR[i] %% primes[primes < sqrt(topR[i])])), !(0 %in% (topL[i] %% primes[primes < sqrt(topL[i])])), !(0 %in% (bottomL[i] %% primes[primes < sqrt(bottomL[i])])), 0)
+  if(mean(primeOrNot) < 0.1) {print(2*i - 1); break}
+}
+
+# Problem 59 - XOR decryption - SOLVED
+
+setwd("C:/Users/jackj.LAPTOP-U1V11TR1/Documents/R Projects")
+
+dec2bin <- function(x){
+  bin <- c()
+  while(x > 0){
+    if(x %% 2 == 0) {
+      bin <- c(bin, "0")
+    } else bin <- c(bin, "1")
+    x <- floor(x/2)
+  }
+  paste(rev(bin), collapse = "")
+}
+
+xorFunc <- function(x,y){
+  num1 <- max(c(x,y)); num2 <- min(c(x,y))
+  num1 <- as.numeric(rev(unlist(strsplit(dec2bin(num1), split = ""))))
+  num2 <- as.numeric(rev(unlist(strsplit(dec2bin(num2), split = ""))))
+  binSum <- c()
+  for(i in 1:length(num1)){
+    if(is.na(num2[i])) {binSum[i] <- num1[i]; next}
+    binSum <- c(binSum, (num1[i] + num2[i]) %% 2)
+  }
+  decSum <- 0
+  for(i in 1:length(binSum)){
+    decSum <- decSum + (2^(i-1))*binSum[i]
+  }
+  decSum
+}
+
+msgConnect <- file(description = "p059_cipher.txt", open = "r", blocking = TRUE)
+msg <- readLines(msgConnect)
+msg <- as.numeric(unlist(strsplit(msg, split = ",")))
+
+# Finding the space bar character for each key
+
+sort(round(100*table(msg[seq(1,length(msg),3)])/length(seq(1,length(msg),3)),2), decreasing = TRUE) # First Key
+sort(round(100*table(msg[seq(2,length(msg),3)])/length(seq(2,length(msg),3)),2), decreasing = TRUE) # Second Key
+sort(round(100*table(msg[seq(3,length(msg),3)])/length(seq(3,length(msg),3)),2), decreasing = TRUE) # Third Key
+
+# 69, 88, 80; if these are the space bar, they would have to turn to 32
+
+possibleKey <- c(xorFunc(69,32), xorFunc(88,32), xorFunc(80,32)) # 101,120,112
+ascii <- c(97:122, 65:90, 32, 34, 39:59, 91, 93)
+names(ascii) <- c(letters, LETTERS, " ", '"', "'", "(", ")", "*", "+", ",", "-", ".", "/", 0:9, ":", ";", "[", "]")
+decrypt <- msg
+for(i in 0:(length(decrypt)-1)){
+  decrypt[i + 1] <- xorFunc(decrypt[i + 1], possibleKey[(i %% 3) + 1])
+}
+words <- decrypt
+for(i in 1:length(words)){
+  if(length(ascii[ascii == words[i]]) == 0) next
+  words[i] <- names(ascii[ascii == words[i]])
+}
+words <- paste(words, collapse = "")
+sum(decrypt)
+words
+
+# Problem 60 - Prime pair sets - SOLVED
+
+# Primes must be subset into either 1 mod 3 or 2 mod 3 groups (apart from 3)
+
+primesUnder <- function(x){
+  nums <- 2:x
+  for(i in 1:length(nums)){
+    if(i > sqrt(x)) break
+    nums <- nums[nums == nums[i] | !((nums %% nums[i]) == 0)]
+  }
+  nums
+}
+primes <- primesUnder(13000)
+primesToTest <- primes[!(primes == 2 | primes == 5)]
+primesToTest1mod3 <- primesToTest[(primesToTest %% 3) == 1 | primesToTest == 3] # 3 included
+primesToTest2mod3 <- primesToTest[(primesToTest %% 3) == 2 | primesToTest == 3] # 3 included
+isPrime <- function(x){
+  !(0 %in% (x %% primes[primes <= sqrt(x)]))
+}
+
+# 1 mod 3 primes: pairs
+
+pairsdf1mod3 <- na.omit(as.data.frame(cbind(NA,NA)))
+for(i in 1:length(primesToTest1mod3)){
+  for(j in 1:length(primesToTest1mod3)){
+    if(i == j | primesToTest1mod3[j] > 5210) break # Break point chosen from an earlier run's answer of 26,033
+    if(isPrime(as.numeric(paste(c(primesToTest1mod3[i],primesToTest1mod3[j]), collapse = ""))) && isPrime(as.numeric(paste(c(primesToTest1mod3[j],primesToTest1mod3[i]), collapse = "")))) pairsdf1mod3 <- rbind(pairsdf1mod3, c(primesToTest1mod3[j], primesToTest1mod3[i]))
+  }
+}
+
+# 2 mod 3 primes: pairs
+
+pairsdf2mod3 <- na.omit(as.data.frame(cbind(NA,NA)))
+for(i in 1:length(primesToTest2mod3)){
+  for(j in 1:length(primesToTest2mod3)){
+    if(i == j | primesToTest2mod3[j] > 5210) break # Break point chosen from an earlier run's answer of 26,033
+    if(isPrime(as.numeric(paste(c(primesToTest2mod3[i],primesToTest2mod3[j]), collapse = ""))) && isPrime(as.numeric(paste(c(primesToTest2mod3[j],primesToTest2mod3[i]), collapse = "")))) pairsdf2mod3 <- rbind(pairsdf2mod3, c(primesToTest2mod3[j], primesToTest2mod3[i]))
+  }
+}
+pairsdf2mod3 <- na.omit(pairsdf2mod3)
+
+# 1 mod 3 primes: triples
+
+triplesdf1mod3 <- na.omit(as.data.frame(cbind(NA,NA,NA)))
+for(k in 1:length(unique(pairsdf1mod3[,1]))){
+  firstPrime <- unique(pairsdf1mod3[,1])[k]
+  testdf <- na.omit(pairsdf1mod3[pairsdf1mod3[,1] == firstPrime,])
+  if(length(testdf[,1]) <= 1) next
+  for(i in 1:length(testdf[,2])){
+    for(j in 1:length(testdf[,2])){
+      if(i == j) break
+      if(isPrime(as.numeric(paste(c(testdf[,2][i],testdf[,2][j]), collapse = ""))) 
+         && isPrime(as.numeric(paste(c(testdf[,2][j],testdf[,2][i]), collapse = "")))) {
+        triplesdf1mod3 <- rbind(triplesdf1mod3, c(firstPrime, testdf[,2][j], testdf[,2][i]))
+      }
+    }
+  } 
+}
+triplesdf1mod3 <- na.omit(triplesdf1mod3)
+
+# 2 mod 3 primes: triples
+
+triplesdf2mod3 <- na.omit(as.data.frame(cbind(NA,NA,NA)))
+for(k in 1:length(unique(pairsdf2mod3[,1]))){
+  firstPrime <- unique(pairsdf2mod3[,1])[k]
+  testdf <- na.omit(pairsdf2mod3[pairsdf2mod3[,1] == firstPrime,])
+  if(length(testdf[,1]) <= 1) next
+  for(i in 1:length(testdf[,2])){
+    for(j in 1:length(testdf[,2])){
+      if(i == j) break
+      if(isPrime(as.numeric(paste(c(testdf[,2][i],testdf[,2][j]), collapse = ""))) 
+         && isPrime(as.numeric(paste(c(testdf[,2][j],testdf[,2][i]), collapse = "")))) {
+        triplesdf2mod3 <- rbind(triplesdf2mod3, c(firstPrime, testdf[,2][j], testdf[,2][i]))
+      }
+    }
+  } 
+}
+triplesdf2mod3 <- na.omit(triplesdf2mod3)
+
+# 1 mod 3 primes: quads
+
+quadsdf1mod3 <- na.omit(as.data.frame(cbind(NA,NA,NA,NA)))
+for(l in 1:length(unique(triplesdf1mod3[,1]))){
+  firstPrime <- unique(triplesdf1mod3[,1])[l]
+  testdf <- na.omit(triplesdf1mod3[triplesdf1mod3 == firstPrime,])
+  if(length(testdf[,1]) <= 1) next
+  for(k in 1:length(unique(testdf[,2]))){
+    secondPrime <- unique(testdf[,2])[k]
+    testdf2 <- testdf[testdf[,2] == secondPrime,]
+    if(length(testdf2[,2]) <= 1) next
+    for(i in 1:length(testdf2[,3])){
+      for(j in 1:length(testdf2[,3])){
+        if(i == j) break
+        if(isPrime(as.numeric(paste(c(testdf2[,3][i],testdf2[,3][j]), collapse = ""))) 
+           && isPrime(as.numeric(paste(c(testdf2[,3][j],testdf2[,3][i]), collapse = "")))) {
+          quadsdf1mod3 <- rbind(quadsdf1mod3, c(firstPrime, secondPrime, testdf2[,3][j], testdf2[,3][i]))
+        }
+      }
+    }
+  }
+}
+quadsdf1mod3 <- na.omit(quadsdf1mod3)
+
+# 2 mod 3 primes: quads
+
+quadsdf2mod3 <- na.omit(as.data.frame(cbind(NA,NA,NA,NA)))
+for(l in 1:length(unique(triplesdf2mod3[,1]))){
+  firstPrime <- unique(triplesdf2mod3[,1])[l]
+  testdf <- na.omit(triplesdf2mod3[triplesdf2mod3 == firstPrime,])
+  if(length(testdf[,1]) <= 1) next
+  for(k in 1:length(unique(testdf[,2]))){
+    secondPrime <- unique(testdf[,2])[k]
+    testdf2 <- testdf[testdf[,2] == secondPrime,]
+    if(length(testdf2[,2]) <= 1) next
+    for(i in 1:length(testdf2[,3])){
+      for(j in 1:length(testdf2[,3])){
+        if(i == j) break
+        if(isPrime(as.numeric(paste(c(testdf2[,3][i],testdf2[,3][j]), collapse = ""))) 
+           && isPrime(as.numeric(paste(c(testdf2[,3][j],testdf2[,3][i]), collapse = "")))) {
+          quadsdf2mod3 <- rbind(quadsdf2mod3, c(firstPrime, secondPrime, testdf2[,3][j], testdf2[,3][i]))
+        }
+      }
+    }
+  }
+}
+quadsdf2mod3 <- na.omit(quadsdf2mod3)
+
+# 1 mod 3 primes: pents
+
+pentsdf1mod3 <- na.omit(as.data.frame(cbind(NA,NA,NA,NA,NA)))
+for(m in 1:length(unique(quadsdf1mod3[,1]))){
+  firstPrime <- unique(quadsdf1mod3[,1])[m]
+  testdf <- na.omit(quadsdf1mod3[quadsdf1mod3[,1] == firstPrime,])
+  if(length(testdf[,1]) <= 1) next
+  for(l in 1:length(unique(testdf[,2]))){
+    secondPrime <- unique(testdf[,2])[l]
+    testdf2 <- na.omit(testdf[testdf[,2] == secondPrime,])
+    if(length(testdf2[,2]) <= 1) next
+    for(k in 1:length(unique(testdf2[,3]))){
+      thirdPrime <- unique(testdf2[,3])[k]
+      testdf3 <- na.omit(testdf2[testdf2[,3] == thirdPrime,])
+      if(length(testdf3[,3]) <= 1) next
+      for(i in 1:length(testdf3[,4])){
+        for(j in 1:length(testdf3[,4])){
+          if(i == j) break
+          if(isPrime(as.numeric(paste(c(testdf3[,4][i],testdf3[,4][j]), collapse = ""))) 
+             && isPrime(as.numeric(paste(c(testdf3[,4][j],testdf3[,4][i]), collapse = "")))) {
+            pentsdf1mod3 <- rbind(pentsdf1mod3, c(firstPrime, secondPrime, thirdPrime, testdf3[,4][j], testdf3[,4][i]))
+          }
+        }
+      }
+    }
+  }
+}
+pentsdf1mod3 <- na.omit(pentsdf1mod3)
+pentsdf1mod3
+
+# 2 mod 3 primes: pents
+
+pentsdf2mod3 <- na.omit(as.data.frame(cbind(NA,NA,NA,NA,NA)))
+for(m in 1:length(unique(quadsdf2mod3[,1]))){
+  firstPrime <- unique(quadsdf2mod3[,1])[m]
+  testdf <- na.omit(quadsdf2mod3[quadsdf2mod3[,1] == firstPrime,])
+  if(length(testdf[,1]) <= 1) next
+  for(l in 1:length(unique(testdf[,2]))){
+    secondPrime <- unique(testdf[,2])[l]
+    testdf2 <- na.omit(testdf[testdf[,2] == secondPrime,])
+    if(length(testdf2[,2]) <= 1) next
+    for(k in 1:length(unique(testdf2[,3]))){
+      thirdPrime <- unique(testdf2[,3])[k]
+      testdf3 <- na.omit(testdf2[testdf2[,3] == thirdPrime,])
+      if(length(testdf3[,3]) <= 1) next
+      for(i in 1:length(testdf3[,4])){
+        for(j in 1:length(testdf3[,4])){
+          if(i == j) break
+          if(isPrime(as.numeric(paste(c(testdf3[,4][i],testdf3[,4][j]), collapse = ""))) 
+             && isPrime(as.numeric(paste(c(testdf3[,4][j],testdf3[,4][i]), collapse = "")))) {
+            pentsdf2mod3 <- rbind(pentsdf2mod3, c(firstPrime, secondPrime, thirdPrime, testdf3[,4][j], testdf3[,4][i]))
+          }
+        }
+      }
+    }
+  }
+}
+pentsdf2mod3 <- na.omit(pentsdf2mod3)
+
+minSum <- 999999
+if(length(pentsdf1mod3[,1])){
+  for(i in 1:length(pentsdf1mod3[,1])){
+    minSum <- min(minSum, sum(pentsdf1mod3[i,]))
+  }
+}
+if(length(pentsdf2mod3[,1]) > 0){
+  for(i in 1:length(pentsdf2mod3[,1])){
+    minSum <- min(minSum, sum(pentsdf1mod3[i,]))
+  }
+}
+
+minSum
+
+
+primes <- primesUnder(minSum)
+finalTestPrimes <- primes[primes > 13000]
+for(i in 1:length(quadsdf1mod3[,1])){
+  testGroup <- quadsdf1mod3[i,]
+  testPrimes <- finalTestPrimes[finalTestPrimes < minSum - sum(testGroup)]
+  if(length(testPrimes) == 0) next
+  for(j in 1:length(testPrimes)){
+    finalTestPrime <- testPrimes[j]
+    for(k in 1:4){
+      if(!(isPrime(as.numeric(paste(c(testGroup[k],finalTestPrime), collapse = "")))
+         && isPrime(as.numeric(paste(c(finalTestPrime, testGroup[k]), collapse = ""))))) break
+      if(k == 4) pentsdf1mod3 <- rbind(pentsdf1mod3, c(testGroup, finalTestPrime))
+    }
+  }
+}
+for(i in 1:length(quadsdf2mod3[,1])){
+  testGroup <- quadsdf2mod3[i,]
+  testPrimes <- finalTestPrimes[finalTestPrimes < minSum - sum(testGroup)]
+  if(length(testPrimes) == 0) next
+  for(j in 1:length(testPrimes)){
+    finalTestPrime <- testPrimes[j]
+    for(k in 1:4){
+      if(!(isPrime(as.numeric(paste(c(testGroup[k],finalTestPrime), collapse = "")))
+           && isPrime(as.numeric(paste(c(finalTestPrime, testGroup[k]), collapse = ""))))) break
+      if(k == 4) pentsdf2mod3 <- rbind(pentsdf2mod3, c(testGroup, finalTestPrime))
+    }
+  }
+}
+
+if(length(pentsdf1mod3[,1]) > 0){
+  for(i in 1:length(pentsdf1mod3[,1])){
+    minSum <- min(minSum, sum(pentsdf1mod3[i,]))
+  }
+}
+if(length(pentsdf2mod3[,1]) > 0){
+  for(i in 1:length(pentsdf2mod3[,1])){
+    minSum <- min(minSum, sum(pentsdf1mod3[i,]))
+  }
+}
+minSum
+
+# Problem 61 - Cyclical figurate numbers - SOLVED
+
+triangles <- c()
+for(i in 1:10000){
+  triangles[i] <- i*(i+1)/2
+  if(triangles[i] > 10000) break
+}
+triangles <- triangles[triangles > 1000 & triangles < 10000]
+
+squares <- c()
+for(i in 1:10000){
+  squares[i] <- i^2
+  if(squares[i] > 10000) break
+}
+squares <- squares[squares > 1000 & squares < 10000]
+
+pents <- c()
+for(i in 1:10000){
+  pents[i] <- i*(3*i-1)/2
+  if(pents[i] > 10000) break
+}
+pents <- pents[pents > 1000 & pents < 10000]
+
+hexes <- c()
+for(i in 1:10000){
+  hexes[i] <- i*(2*i-1)
+  if(hexes[i] > 10000) break
+}
+hexes <- hexes[hexes > 1000 & hexes < 10000]
+
+hepts <- c()
+for(i in 1:10000){
+  hepts[i] <- i*(5*i-3)/2
+  if(hepts[i] > 10000) break
+}
+hepts <- hepts[hepts > 1000 & hepts < 10000]
+
+octs <- c()
+for(i in 1:10000){
+  octs[i] <- i*(3*i-2)
+  if(octs[i] > 10000) break
+}
+octs <- octs[octs > 1000 & octs < 10000]
+
+triangles <- triangles[triangles - 100*floor(triangles/100) > 9]
+squares <- squares[squares - 100*floor(squares/100) > 9]
+pents <- pents[pents - 100*floor(pents/100) > 9]
+hexes <- hexes[hexes - 100*floor(hexes/100) > 9]
+hepts <- hepts[hepts - 100*floor(hepts/100) > 9]
+octs <- octs[octs - 100*floor(octs/100) > 9]
+
+triangleStarts <- floor(triangles/100)
+squareStarts <- floor(squares/100)
+pentStarts <- floor(pents/100)
+hexStarts <- floor(hexes/100)
+heptStarts <- floor(hepts/100)
+octStarts <- floor(octs/100)
+
+triangleEnds <- triangles - 100*floor(triangles/100)
+squareEnds <- squares - 100*floor(squares/100)
+pentEnds <- pents - 100*floor(pents/100)
+hexEnds <- hexes - 100*floor(hexes/100)
+heptEnds <- hepts - 100*floor(hepts/100)
+octEnds <- octs - 100*floor(octs/100)
+
+numsList <- list(triangles, squares, pents, hexes, hepts)
+startsList <- list(triangleStarts, squareStarts, pentStarts, hexStarts, heptStarts)
+endsList <- list(triangleEnds, squareEnds, pentEnds, hexEnds, heptEnds)
+
+perms <- na.omit(as.data.frame(c(NA,NA,NA,NA,NA)))
+for(i in 1:5){
+  for(j in 1:5){
+    if(i == j) next
+    for(k in 1:5){
+      if(i == k | j == k) next
+      for(l in 1:5){
+        if(i == l | j == l | k == l) next
+        for(m in 1:5){
+          if(i == m | j == m | k == m | l == m) next
+          perms <- rbind(perms, c(i,j,k,l,m))
+        }
+      }
+    }
+  }
+}
+
+answer <- c()
+for(i in 1:length(octs)){
+  if(length(answer) > 0) break
+  test <- octEnds[i]
+  for(j in 1:nrow(perms)){
+    if(!(test %in% startsList[[perms[j,1]]])) next
+    test2 <- endsList[[perms[j,1]]][which(startsList[[perms[j,1]]] == test)]
+    for(k in 1:length(test2)){
+      if(!(test2[k] %in% startsList[[perms[j,2]]])) next
+      test3 <- endsList[[perms[j,2]]][which(startsList[[perms[j,2]]] == test2[k])]
+      for(l in 1:length(test3)){
+        if(!(test3[l] %in% startsList[[perms[j,3]]])) next
+        test4 <- endsList[[perms[j,3]]][which(startsList[[perms[j,3]]] == test3[l])]
+        for(m in 1:length(test4)){
+          if(!(test4[m] %in% startsList[[perms[j,4]]])) next
+          test5 <- endsList[[perms[j,4]]][which(startsList[[perms[j,4]]] == test4[m])]
+          for(n in 1:length(test5)){
+            if(!(test5[n] %in% startsList[[perms[j,5]]])) next
+            test6 <- endsList[[perms[j,5]]][which(startsList[[perms[j,5]]] == test5[n])]
+            for(o in 1:length(test6)){
+              if(!(test6[o] == octStarts[i])) next
+              {answer <- c(octs[i],
+                           numsList[[perms[j,1]]][which(startsList[[perms[j,1]]] == test)],
+                           numsList[[perms[j,2]]][which(startsList[[perms[j,2]]] == test2[k])],
+                           numsList[[perms[j,3]]][which(startsList[[perms[j,3]]] == test3[l])],
+                           numsList[[perms[j,4]]][which(startsList[[perms[j,4]]] == test4[m])],
+                           numsList[[perms[j,5]]][which(startsList[[perms[j,5]]] == test5[n])]); break}
+            }
+          }
+        }
+      }
+    }
+  }
+}
+sum(answer)
+# 1281 %in% octs; 8128 %in% hexes; 2882 %in% pents; 8256 %in% triangles; 5625 %in% squares; 2512 %in% hepts
+
+# Problem 62 - Cubic permutations - SOLVED
+
+options(scipen = 999)
+
+answer <- 0
+power <- 8
+while(answer == 0){
+  base <- ceiling((10^((power-1)/3)))
+  top <- floor((10^(power/3)))
+  possibles <- c()
+  for(i in base:top){
+    possibles <- c(possibles, as.numeric(paste(sort(unlist(strsplit(as.character(i^3), split = "")), decreasing = TRUE), collapse = "")))
+  }
+  possibleMins <- c()
+  if(5 %in% table(possibles)) {
+    for(i in 1:length(table(possibles)[table(possibles) == 5])){
+      possibleMins <- c(possibleMins, 
+                        base + min(which(possibles == as.numeric(names(sort(table(possibles), decreasing = TRUE))[i]))) - 1)
+    }
+    {answer <- (min(possibleMins))^3; print(answer)}
+  }
+  power <- power + 1
+}
+
+# Problem 63 - Powerful digit counts - SOLVED
+
+options(scipen = 999)
+
+counter <- 0
+for(i in 1:9){
+  for(j in 1:100){
+    if(ceiling(log10(i^j)) == j | i^j == 10^(j-1)) counter <- counter + 1
+    if(i^j < 10^(j - 1)) break
+  }
+}
+counter
+
+# Problem 64 - Odd period square roots - SOLVED
+
+squares <- (1:100)^2
+irrationals <- 1:10000
+irrationals <- irrationals[!(irrationals %in% squares)]
+
+newFrac <- function(N,a,d){
+  N <- sqrt(N)
+  d <- (N+a)*(N-a)/d
+  for(i in 1:1000000){
+    a <- a - d
+    # whole <- whole + 1
+    if(a < 0 && Mod(a) > N) {a <- Mod(a) - d; break}
+  }
+  round(c(a,d))
+}
+
+periods <- c()
+for(i in 1:length(irrationals)){
+  N <- irrationals[i]
+  a <- floor(sqrt(N))
+  d <- 1
+  nextStep <- newFrac(N,a,d)
+  for(j in 1:1000000){
+    newa <- nextStep[1]; newd <- nextStep[2]
+    if(j == 1) test <- c(newa, newd)
+    nextStep <- newFrac(N,newa,newd)
+    if(j > 1 && newa == test[1] && newd == test[2]) {periods[i] <- j - 1; break}
+  }
+}
+
+length(periods[(periods %% 2) == 1])
+
+# Problem 65 - Convergents of e - SOLVED
+
+options(scipen = 999)
+library(gmp)
+
+nums <- c(2,rep(1,99))
+for(i in 1:99){
+  if((i %% 3) == 0) {nums[i] <- 2*i/3; next}
+}
+
+nextConvergent <- function(x,numer,denom){
+  a <- x*denom+numer
+  b <- denom
+  c(b,a)
+}
+
+x <- nums[99]; numer <- 1; denom <- nums[100]
+for(i in 98:1){
+  nextStep <- nextConvergent(x,numer,denom)
+  x <- as.bigz(nums[i]); numer <- as.bigz(nextStep[1]); denom <- as.bigz(nextStep[2])
+  if(i == 1) winner <- nextConvergent(x,numer,denom)[2]
+}
+
+sum(as.numeric(unlist(strsplit(as.character(winner), split = ""))))
+
+# Problem 66 - Diophantine equation
+
+options(scipen = 999)
+library(gmp)
+install.packages("Rmpfr")
+library(Rmpfr)
+
+squares <- (1:100)^2
+irrationals <- 1:10
+irrationals <- irrationals[!(irrationals %in% squares)]
+
+newFrac <- function(N,a,d){
+  N <- sqrt(N)
+  d <- (N+a)*(N-a)/d
+  for(i in 1:1000000){
+    a <- a - d
+    # whole <- whole + 1
+    if(a < 0 && Mod(a) > N) {a <- Mod(a) - d; break}
+  }
+  round(c(a,d))
+}
+
+periods <- c()
+a
+for(i in 1:length(irrationals)){
+  N <- irrationals[i]
+  a <- floor(sqrt(N))
+  d <- 1
+  nextStep <- newFrac(N,a,d)
+  for(j in 1:1000000){
+    newa <- nextStep[1]; newd <- nextStep[2]
+    if(j == 1) test <- c(newa, newd)
+    nextStep <- newFrac(N,newa,newd)
+    if(j > 1 && newa == test[1] && newd == test[2]) {periods[i] <- j - 1; break}
+  }
+}
+
+length(periods[(periods %% 2) == 1])
 
 
 
-
+periods
