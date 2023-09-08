@@ -1464,7 +1464,7 @@ for(n in 23:100){
 }
 counter
 
-# Problem 54 - Poker hand - SOLVED
+# Problem 54 - Poker hands - SOLVED
 
 # Reading in the games to test
 
@@ -2239,7 +2239,7 @@ newFrac <- function(N,a,d){
 }
 
 periods <- c()
-a
+
 for(i in 1:length(irrationals)){
   N <- irrationals[i]
   a <- floor(sqrt(N))
@@ -2254,7 +2254,5 @@ for(i in 1:length(irrationals)){
 }
 
 length(periods[(periods %% 2) == 1])
-
-
 
 periods
